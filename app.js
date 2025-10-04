@@ -10,7 +10,7 @@
     targetSteps: 10000,
     penaltyAmount: 50,
     adminPassword: 'steps2025',
-    paymentDetails: { name: "YOUR NAME", number: "09123456789" },
+    paymentDetails: { name: "Ramon O.", number: "09060076691" },
     entries: [],
     isAdminMode: false,
     editingEntry: null,
