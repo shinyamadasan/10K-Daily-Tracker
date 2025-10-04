@@ -1,9 +1,9 @@
- const CACHE_NAME = 'steps-tracker-v1';
+ const CACHE_NAME = 'steps-tracker-v2';
   const urlsToCache = [
-    '/',
-    '/index.html',
-    '/app.js',
-    '/style.css'
+    '/10K-Daily-Tracker/',
+    '/10K-Daily-Tracker/index.html',
+    '/10K-Daily-Tracker/app.js',
+    '/10K-Daily-Tracker/style.css'
   ];
 
   self.addEventListener('install', event => {

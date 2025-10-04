@@ -2,7 +2,7 @@
     "name": "10K Steps Challenge Tracker",
     "short_name": "Steps Tracker",
     "description": "Track your team's 10K steps challenge and payments",
-    "start_url": "/",
+    "start_url": "/10K-Daily-Tracker/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#4f46e5",
