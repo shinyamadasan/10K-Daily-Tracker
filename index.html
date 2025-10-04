@@ -1,0 +1,363 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>10K Steps Challenge Tracker</title>
+      <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Steps Tracker">
+      <link rel="stylesheet" href="style.css">
+
+      <!-- Firebase SDK -->
+      <script type="module">
+          import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+          import { getFirestore } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+          import { getStorage } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.js";
+
+          const firebaseConfig = {
+              apiKey: "AIzaSyBOm0hQaHHLCgmkQG1XoMuiHxvexEI7RvM",
+              authDomain: "steps-tracker-a27cd.firebaseapp.com",
+              projectId: "steps-tracker-a27cd",
+              storageBucket: "steps-tracker-a27cd.appspot.com",
+              messagingSenderId: "6602687349",
+              appId: "1:6602687349:web:2f59b432340508a950093c"
+          };
+
+          const app = initializeApp(firebaseConfig);
+          window.db = getFirestore(app);
+          window.storage = getStorage(app);
+          window.firebaseReady = true;
+      </script>
+
+      <script src="app.js" defer></script>
+  </head>
+  <body>
+      <div class="container">
+          <header class="app-header">
+              <h1>10K Steps Challenge Tracker</h1>
+              <div id="admin-indicator" class="admin-indicator hidden">
+                  <span class="admin-badge">🔐 Admin Mode Active</span>
+              </div>
+          </header>
+
+          <nav class="tab-nav">
+              <button class="tab-btn active" data-tab="submit">Submit Steps</button>
+              <button class="tab-btn" data-tab="tracker">Daily Tracker</button>
+              <button class="tab-btn" data-tab="summary">Payment Summary</button>
+              <button class="tab-btn" data-tab="leaderboard">🏆 Leaderboard</button>
+              <button class="tab-btn" data-tab="dashboard">📊 Dashboard</button>
+          </nav>
+
+          <div id="message-box" class="message hidden"></div>
+
+          <div id="submit-tab" class="tab-content active">
+              <div class="card">
+                  <div class="card__header">
+                      <h2>Submit Your Daily Steps</h2>
+                  </div>
+                  <div class="card__body">
+                      <form id="submit-form">
+                          <div class="form-group">
+                              <label for="participant-select" class="form-label">Participant Name</label>
+                              <select id="participant-select" class="form-control" required>
+                                  <option value="">Select your name</option>
+                              </select>
+                          </div>
+                          <div class="form-group">
+                              <label for="date-input" class="form-label">Date</label>
+                              <input type="date" id="date-input" class="form-control" required>
+                          </div>
+                          <div class="form-group">
+                              <label for="steps-input" class="form-label">Step Count</label>
+                              <input type="number" id="steps-input" class="form-control" min="0" max="100000" required>
+                          </div>
+                          <div class="form-group">
+                              <label for="proof-upload" class="form-label">Proof Image (Required)</label>
+                              <input type="file" id="proof-upload" class="form-control" accept="image/*" required>
+                              <small class="form-hint">Upload screenshot from your fitness app (required)</small>
+                          </div>
+                          <button type="submit" class="btn btn--primary btn--full-width">Submit Steps</button>
+                      </form>
+                  </div>
+              </div>
+          </div>
+
+          <div id="tracker-tab" class="tab-content">
+              <div class="card">
+                  <div class="card__header">
+                      <h2>Daily Tracker</h2>
+                      <div class="tracker-controls">
+                          <div class="filter-group">
+                              <input type="text" id="name-filter" class="form-control" placeholder="Filter by name">
+                              <input type="date" id="date-from" class="form-control" placeholder="From date">
+                              <input type="date" id="date-to" class="form-control" placeholder="To date">
+                              <button id="clear-filters" class="btn btn--secondary">Clear</button>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="card__body">
+                      <div class="table-container">
+                          <table id="tracker-table" class="data-table">
+                              <thead>
+                                  <tr>
+                                      <th>Date</th>
+                                      <th>Name</th>
+                                      <th>Steps</th>
+                                      <th>Status</th>
+                                      <th>Proof</th>
+                                      <th>Amount Owed</th>
+                                      <th id="actions-header" class="admin-only hidden">Actions</th>
+                                  </tr>
+                              </thead>
+                              <tbody id="tracker-tbody"></tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <div id="summary-tab" class="tab-content">
+              <div class="card" style="margin-bottom: 24px;">
+                  <div class="card__header">
+                      <h3>How to Pay</h3>
+                  </div>
+                  <div class="card__body">
+                      <p>Please send your payment via GCash to:</p>
+                      <p style="margin-bottom: 8px;"><strong>Admin Name:</strong> <span id="admin-name">[Your Name]</span></p>
+                      <p style="margin-bottom: 16px;"><strong>GCash Number:</strong> <span id="admin-number">[Your GCash Number]</span></p>
+                  </div>
+              </div>
+              <div class="card">
+                  <div class="card__header">
+                      <h2>Payment Summary</h2>
+                      <div class="summary-actions">
+                          <button id="admin-toggle" class="btn btn--outline">🔐 Enable Admin Mode</button>
+                      </div>
+                  </div>
+                  <div class="card__body">
+                      <div class="table-container">
+                          <table id="summary-table" class="data-table">
+                              <thead>
+                                  <tr>
+                                      <th>Name</th>
+                                      <th>Total Days</th>
+                                      <th>Days Missed</th>
+                                      <th>Amount Owed</th>
+                                      <th>Completion Rate</th>
+                                      <th>Payment Status</th>
+                                  </tr>
+                              </thead>
+                              <tbody id="summary-tbody"></tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <div id="leaderboard-tab" class="tab-content">
+      <!-- Team Stats Section -->
+      <div class="card" style="margin-bottom: 24px;">
+          <div class="card__header">
+              <h2>🌟 Team Challenge Stats</h2>
+          </div>
+          <div class="card__body">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                  <div class="stat-card">
+                      <div class="stat-label">Team Success Rate</div>
+                      <div class="stat-value" id="team-success-rate">0%</div>
+                  </div>
+                  <div class="stat-card">
+                      <div class="stat-label">Total Distance</div>
+                      <div class="stat-value" id="team-distance">0 km</div>
+                  </div>
+                  <div class="stat-card">
+                      <div class="stat-label">Total Calories Burned</div>
+                      <div class="stat-value" id="team-calories">0 kcal</div>
+                  </div>
+                  <div class="stat-card">
+                      <div class="stat-label">Penalty Pool</div>
+                      <div class="stat-value" id="penalty-pool">₱0</div>
+                  </div>
+              </div>
+              <div style="margin-top: 16px;">
+                  <div style="font-size: 14px; color: var(--color-text-secondary); margin-bottom: 8px;">Team Goal Progress</div>
+                  <div class="progress-bar" style="height: 24px;">
+                      <div id="team-progress-fill" class="progress-fill" style="width: 0%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size:
+  12px;">0%</div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="card">
+          <div class="card__header">
+              <h2>🏆 Challenge Leaderboard</h2>
+          </div>
+          <div class="card__body">
+              <div class="table-container">
+                  <table id="leaderboard-table" class="data-table">
+                      <thead>
+                          <tr>
+                              <th>Rank</th>
+                              <th>Name</th>
+                              <th>Success Rate</th>
+                              <th>Streak</th>
+                              <th>Distance</th>
+                              <th>Best Day</th>
+                              <th>Achievements</th>
+                              <th>Trend</th>
+                          </tr>
+                      </thead>
+                      <tbody id="leaderboard-tbody"></tbody>
+                  </table>
+              </div>
+              <div class="grand-totals" style="margin-top: 16px;">
+                  <div class="total-item">
+                      <span class="total-label">Grand Total Collected:</span>
+                      <span id="grand-total-paid">₱0</span>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+ <div id="dashboard-tab" class="tab-content">
+      <div class="card">
+          <div class="card__header">
+              <h2>📊 Admin Dashboard</h2>
+          </div>
+          <div class="card__body">
+              <!-- At-Risk List -->
+              <div style="margin-bottom: 24px;">
+                  <h3 style="margin-bottom: 12px;">⚠️ At-Risk Today</h3>
+                  <p style="color: #666; margin-bottom: 12px; font-size: 14px;">People who haven't submitted steps for today:</p>
+                  <div id="at-risk-list" style="background: #fef3c7; padding: 12px; border-radius: 4px; border-left: 4px solid #f59e0b;">
+                      <p id="at-risk-content">Loading...</p>
+                  </div>
+              </div>
+
+              <!-- Weekly Stats -->
+              <div style="margin-bottom: 24px;">
+                  <h3 style="margin-bottom: 12px;">📈 This Week's Stats</h3>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                      <div class="stat-card">
+                          <div class="stat-label">Total Submissions</div>
+                          <div class="stat-value" id="week-submissions">0</div>
+                      </div>
+                      <div class="stat-card">
+                          <div class="stat-label">Success Rate</div>
+                          <div class="stat-value" id="week-success-rate">0%</div>
+                      </div>
+                      <div class="stat-card">
+                          <div class="stat-label">Total Penalties</div>
+                          <div class="stat-value" id="week-penalties">₱0</div>
+                      </div>
+                      <div class="stat-card">
+                          <div class="stat-label">Pending Payments</div>
+                          <div class="stat-value" id="pending-payments">0</div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Export -->
+              <div class="admin-only">
+      <h3 style="margin-bottom: 12px;">💾 Export Data</h3>
+      <button id="export-csv" class="btn btn--secondary">Download CSV Report</button>
+  </div>
+          </div>
+      </div>
+  </div>
+      <!-- Modals -->
+      <div id="edit-modal" class="modal hidden">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h3>Edit Entry</h3>
+                  <button id="close-modal" class="close-btn">&times;</button>
+              </div>
+              <div class="modal-body">
+                  <div class="form-group">
+                      <label for="edit-steps-input" class="form-label">Step Count</label>
+                      <input type="number" id="edit-steps-input" class="form-control" min="0" required>
+                  </div>
+                  <div class="modal-actions">
+                      <button type="button" id="cancel-edit" class="btn btn--secondary">Cancel</button>
+                      <button type="button" id="edit-save-btn" class="btn btn--primary">Save Changes</button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div id="payment-proof-modal" class="modal hidden">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h3>Settle Balance</h3>
+                  <button id="close-payment-proof-modal" class="close-btn">&times;</button>
+              </div>
+              <div class="modal-body">
+                  <p>You are about to settle a balance of <strong id="payment-amount-due">₱0</strong>.</p>
+
+                  <div style="margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 4px;">
+                      <p style="margin-bottom: 8px;"><strong>Send payment to:</strong></p>
+                      <p style="margin-bottom: 4px;">Name: <strong id="modal-admin-name"></strong></p>
+                      <p style="margin-bottom: 12px;">GCash: <strong id="modal-admin-number"></strong></p>
+
+                      <label style="display: block; margin-bottom: 4px; font-weight: 500;">Payment Message:</label>
+                      <textarea id="payment-message-text"
+                                readonly
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: none;"
+                                rows="2"></textarea>
+                      <button type="button" id="copy-payment-message" class="btn btn--secondary btn--full-width" style="margin-top: 8px;">
+                          📋 Copy Message
+                      </button>
+                  </div>
+
+                  <p style="margin-top: 16px;">After sending, upload your GCash receipt below:</p>
+                  <form id="payment-proof-form">
+                      <div class="form-group">
+                          <label for="payment-proof-upload" class="form-label">Payment Receipt</label>
+                          <input type="file" id="payment-proof-upload" class="form-control" accept="image/*" required>
+                      </div>
+                      <div class="modal-actions">
+                          <button type="button" id="cancel-payment-proof" class="btn btn--secondary">Cancel</button>
+                          <button type="submit" class="btn btn--primary">Submit Receipt</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      </div>
+
+      <div id="admin-verify-modal" class="modal hidden">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h3 id="admin-verify-title">Verify Payment</h3>
+                  <button id="close-admin-verify-modal" class="close-btn">&times;</button>
+              </div>
+              <div class="modal-body">
+                  <p>Please verify that the payment has been received before approving.</p>
+                  <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 16px;">
+                      <img id="admin-verify-image" src="" alt="Payment Proof" style="width: 100%; height: auto;">
+                  </div>
+                  <div class="modal-actions">
+                      <button type="button" id="close-admin-verify-modal" class="btn btn--secondary">Close</button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <div id="step-proof-viewer-modal" class="modal hidden">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h3>Step Proof</h3>
+                  <button id="close-step-proof-viewer" class="close-btn">&times;</button>
+              </div>
+              <div class="modal-body" style="text-align: center;">
+                  <img id="step-proof-image" src="" alt="Step Proof Screenshot" style="max-width: 100%; max-height: 70vh; height: auto;">
+              </div>
+          </div>
+      </div>
+  </body>
+  </html>
