@@ -57,7 +57,7 @@ firebase-storage.js: https://www.gstatic.com/firebasejs/12.3.0/firebase-storage.
 **Firebase Config (in index.html):**
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyBKZ9vjBwJVm3c-BxLR25tMi-4DkwO3u-I",
+  apiKey: " ",
   authDomain: "steps-tracker-a27cd.firebaseapp.com",
   projectId: "steps-tracker-a27cd",
   storageBucket: "steps-tracker-a27cd.appspot.com",
