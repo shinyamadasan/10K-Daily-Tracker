@@ -3,10 +3,12 @@
 .env.local
 .env.production
 config.js
+config.production.js
 secrets.js
 
 # Actual configuration file (keep template)
 config.js
+config.production.js
 
 # API Keys and credentials
 *api-key*
