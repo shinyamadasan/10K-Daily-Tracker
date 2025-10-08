@@ -1468,4 +1468,98 @@ select.form-control {
     padding: 2px 6px;
     border-radius: 4px;
     font-weight: 600;
+  }#removed-progress-fill { display: none !important; }
+.progress-bar:has(#removed-progress-fill) { display: none !important; }
+
+/* Mobile Optimization */
+@media (max-width: 768px) {
+  /* Better touch targets */
+  .btn, button, input[type="submit"], input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px 16px;
+    font-size: 16px;
+    border-radius: 8px;
   }
+  
+  /* Tab navigation improvements */
+  .tab-btn {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+    margin: 0 4px;
+  }
+  
+  /* Form improvements */
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  /* Better spacing */
+  .card {
+    margin: 8px;
+    padding: 16px;
+  }
+  
+  /* Mobile table improvements */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 600px;
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 8px 4px;
+    white-space: nowrap;
+  }
+  
+  /* Mobile modal improvements */
+  .modal {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+  
+  /* Better image upload */
+  .proof-image {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 8px;
+  }
+  
+  /* Mobile-friendly stats grid */
+  .stat-card {
+    min-height: 80px;
+    padding: 16px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  /* Better mobile navigation */
+  .nav {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  /* Mobile-friendly leaderboard */
+  .rank-cell {
+    font-size: 18px;
+    min-width: 40px;
+  }
+  
+  /* Achievement badges mobile */
+  .achievement-badge {
+    font-size: 16px;
+    margin: 2px;
+  }
+}

@@ -2,15 +2,23 @@
   // === FIREBASE + IMGBB STEPS TRACKER ===
   //
 
-  const IMGBB_API_KEY = 'a16ca1b4f6677cff37245039aee957f5';
+  // Wait for config to be loaded
+  const getConfig = () => {
+    if (!window.CONFIG) {
+      throw new Error('Config not loaded. Make sure config.js is loaded before app.js');
+    }
+    return window.CONFIG;
+  };
+
+  const IMGBB_API_KEY = getConfig().imgbbApiKey;
 
   const StepsTracker = {
     // ---- Config and state
-    participants: ["Del", "Giem", "Glaiz", "Jeun", "Joy", "Kokoy", "Leanne", "Lui", "Ramon", "Robert", "Sarah", "Sheila", "Shin", "Yohan", "Zephanny", "Sam"],
-    targetSteps: 10000,
-    penaltyAmount: 50,
-    adminPassword: 'steps2025',
-    paymentDetails: { name: "Ramon O.", number: "09060076691" },
+    participants: getConfig().participants,
+    targetSteps: getConfig().targetSteps,
+    penaltyAmount: getConfig().penaltyAmount,
+    adminPassword: getConfig().adminPassword,
+    paymentDetails: getConfig().paymentDetails,
     entries: [],
     isAdminMode: false,
     editingEntry: null,
@@ -18,6 +26,8 @@
     participantToVerify: null,
 
     async init() {
+      console.log('Initializing app...');
+      console.log('Firebase config:', window.CONFIG?.firebase);
       await this.waitForFirebase();
       this.displayPaymentDetails();
       await this.loadData();
@@ -26,6 +36,7 @@
       this.setDefaultDate();
       this.setParticipantMode();
       this.updateAllDisplays();
+      console.log('App initialized successfully');
     },
 
     async waitForFirebase() {
@@ -54,8 +65,13 @@
     displayPaymentDetails() {
       const nameEl = document.getElementById('admin-name');
       const numEl = document.getElementById('admin-number');
+      const modalNameEl = document.getElementById('modal-admin-name');
+      const modalNumEl = document.getElementById('modal-admin-number');
+      
       if (nameEl) nameEl.textContent = this.paymentDetails.name;
       if (numEl) numEl.textContent = this.paymentDetails.number;
+      if (modalNameEl) modalNameEl.textContent = this.paymentDetails.name;
+      if (modalNumEl) modalNumEl.textContent = this.paymentDetails.number;
     },
 
     setupEventListeners() {
@@ -761,7 +777,7 @@
       t.innerHTML = `<tr><td colspan="8">No data.</td></tr>`;
       const grand = document.getElementById('grand-total-paid');
       if (grand) grand.textContent = `₱0`;
-      this.updateTeamStats([], 0, 0, 0, 0);
+      this.updateTeamStats([], 0, 0, 0);
       return;
     }
 
@@ -783,24 +799,30 @@
       const successful = arr.filter(s => s >= this.targetSteps).length;
       const successRate = ((successful / arr.length) * 100).toFixed(0);
 
-      // Calculate streak
-      const sortedDates = dates.map(d => new Date(d)).sort((a, b) => b - a);
+      // Calculate streak - count consecutive days from most recent
       let streak = 0;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
+      const sortedDates = [...dates].sort((a, b) => new Date(b) - new Date(a));
+      
+      // Create a map of date to steps for easier lookup
+      const dateToSteps = {};
+      dates.forEach((date, index) => {
+        dateToSteps[date] = arr[index];
+      });
+      
+      // Count consecutive days from most recent date
       for (let i = 0; i < sortedDates.length; i++) {
-        const checkDate = new Date(today);
-        checkDate.setDate(checkDate.getDate() - i);
-        if (sortedDates[i].getTime() === checkDate.getTime() && arr[dates.indexOf(sortedDates[i].toISOString().split('T')[0])] >= this.targetSteps) {
+        const currentDate = sortedDates[i];
+        const steps = dateToSteps[currentDate];
+        
+        if (steps >= this.targetSteps) {
           streak++;
-        } else if (i > 0) {
-          break;
+        } else {
+          break; // Stop counting when we hit a day that didn't meet the target
         }
       }
 
-      // Calculate distance (steps × 0.762m / 1000 = km)
-      const distance = (sum * 0.762 / 1000).toFixed(1);
+      // Use total steps instead of distance
+      const totalSteps = sum;
 
       // Calculate calories (steps × 0.04)
       const calories = (sum * 0.04).toFixed(0);
@@ -810,20 +832,22 @@
       const bestDayIndex = arr.indexOf(maxSteps);
       const bestDay = new Date(dates[bestDayIndex]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-      // Calculate trend (last 3 days vs previous 3 days)
+      // Calculate trend (recent performance vs overall average)
       let trend = '—';
-      if (arr.length >= 6) {
-        const recent3 = arr.slice(-3).reduce((a, b) => a + b, 0) / 3;
-        const previous3 = arr.slice(-6, -3).reduce((a, b) => a + b, 0) / 3;
-        const diff = ((recent3 - previous3) / previous3 * 100).toFixed(0);
-        if (diff > 5) trend = `<span class="trend-up">↗ ${diff}%</span>`;
-        else if (diff < -5) trend = `<span class="trend-down">↘ ${diff}%</span>`;
-        else trend = `<span class="trend-stable">→ ${diff}%</span>`;
+      if (arr.length >= 3) {
+        const recentDays = Math.min(3, arr.length);
+        const recentAvg = arr.slice(-recentDays).reduce((a, b) => a + b, 0) / recentDays;
+        const overallAvg = sum / arr.length;
+        const diff = ((recentAvg - overallAvg) / overallAvg * 100).toFixed(0);
+        
+        if (diff > 10) trend = `<span class="trend-up">↗ +${diff}%</span>`;
+        else if (diff < -10) trend = `<span class="trend-down">↘ ${diff}%</span>`;
+        else trend = `<span class="trend-stable">→ ${diff > 0 ? '+' : ''}${diff}%</span>`;
       }
 
       const achievements = this.calculateAchievements(arr, dates, streak);
 
-      return { participant: p, sum, avg, successful, successRate, streak, distance, calories, bestDay: `${maxSteps.toLocaleString()} (${bestDay})`, achievements, trend };
+      return { participant: p, sum, avg, successful, successRate, streak, totalSteps, calories, bestDay: `${maxSteps.toLocaleString()} (${bestDay})`, achievements, trend };
     });
 
     stats.sort((a, b) => b.successRate - a.successRate || b.sum - a.sum);
@@ -853,7 +877,7 @@
           <td>${s.participant}</td>
           <td>${s.successRate}%</td>
           <td>${s.streak > 0 ? s.streak + ' 🔥' : '0'}</td>
-          <td>${s.distance} km</td>
+          <td>${s.totalSteps.toLocaleString()}</td>
           <td>${s.bestDay}</td>
           <td>${achievementBadges || '—'}</td>
           <td>${s.trend}</td>
@@ -865,11 +889,18 @@
 
     // Update team stats
     const totalSteps = stats.reduce((a, b) => a + b.sum, 0);
-    const totalDistance = stats.reduce((a, b) => a + parseFloat(b.distance), 0).toFixed(1);
     const totalCalories = stats.reduce((a, b) => a + parseInt(b.calories), 0);
     const avgSuccessRate = (stats.reduce((a, b) => a + parseFloat(b.successRate), 0) / stats.length).toFixed(0);
 
-    this.updateTeamStats(stats, totalSteps, totalDistance, totalCalories, avgSuccessRate);
+    this.updateTeamStats(stats, totalSteps, totalCalories, avgSuccessRate);
+    
+    // Calculate and update grand total collected
+    const grandTotalCollected = this.entries
+      .filter(e => !e.paymentStatus && e.steps < this.targetSteps && e.isPaid)
+      .length * this.penaltyAmount;
+    
+    const grandTotalEl = document.getElementById('grand-total-paid');
+    if (grandTotalEl) grandTotalEl.textContent = `₱${grandTotalCollected}`;
   },
 
   calculateAchievements(steps, dates, streak) {
@@ -900,16 +931,109 @@
     return achievements;
   },
 
-  updateTeamStats(stats, totalSteps, totalDistance, totalCalories, avgSuccessRate) {
-    const teamStepsEl = document.getElementById('team-total-steps');
-    const teamDistanceEl = document.getElementById('team-total-distance');
-    const teamCaloriesEl = document.getElementById('team-total-calories');
-    const teamSuccessEl = document.getElementById('team-success-rate');
+  updateTeamStats(stats, totalSteps, totalCalories, avgSuccessRate) {
+    const teamStepsEl = document.getElementById('team-distance'); // This is the correct ID from HTML
+    const totalCollectedEl = document.getElementById('total-collected');
+    const penaltyPoolEl = document.getElementById('penalty-pool');
 
     if (teamStepsEl) teamStepsEl.textContent = totalSteps.toLocaleString();
-    if (teamDistanceEl) teamDistanceEl.textContent = `${totalDistance} km`;
-    if (teamCaloriesEl) teamCaloriesEl.textContent = totalCalories.toLocaleString();
-    if (teamSuccessEl) teamSuccessEl.textContent = `${avgSuccessRate}%`;
+    
+    // Calculate total collected (penalties that have been paid)
+    const totalCollected = this.entries
+      .filter(e => !e.paymentStatus && e.steps < this.targetSteps && e.isPaid)
+      .length * this.penaltyAmount;
+    
+    if (totalCollectedEl) totalCollectedEl.textContent = `₱${totalCollected}`;
+    
+    // Calculate penalty pool (unpaid penalties)
+    const totalPenalties = stats.reduce((total, stat) => {
+      const participantEntries = this.entries.filter(e => e.participant === stat.participant && !e.paymentStatus);
+      const missedDays = participantEntries.filter(e => e.steps < this.targetSteps && !e.isPaid).length;
+      return total + (missedDays * this.penaltyAmount);
+    }, 0);
+    
+    if (penaltyPoolEl) penaltyPoolEl.textContent = `₱${totalPenalties}`;
+  },
+
+  // ---- Mobile Optimizations
+  initMobileOptimizations() {
+    // Prevent zoom on input focus (iOS)
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+      input.addEventListener('focus', () => {
+        if (window.innerWidth <= 768) {
+          const viewport = document.querySelector('meta[name="viewport"]');
+          if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+          }
+        }
+      });
+      
+      input.addEventListener('blur', () => {
+        if (window.innerWidth <= 768) {
+          const viewport = document.querySelector('meta[name="viewport"]');
+          if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+          }
+        }
+      });
+    });
+    
+    // Add touch feedback to buttons
+    const buttons = document.querySelectorAll('.btn, button, .tab-btn');
+    buttons.forEach(button => {
+      button.addEventListener('touchstart', () => {
+        button.style.transform = 'scale(0.95)';
+        button.style.transition = 'transform 0.1s ease';
+      });
+      
+      button.addEventListener('touchend', () => {
+        button.style.transform = 'scale(1)';
+      });
+    });
+    
+    // Improve table scrolling on mobile
+    const tables = document.querySelectorAll('.table-container');
+    tables.forEach(table => {
+      table.style.webkitOverflowScrolling = 'touch';
+    });
+    
+    // Add swipe gesture for tab navigation (optional)
+    let startX = 0;
+    let startY = 0;
+    
+    document.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    });
+    
+    document.addEventListener('touchend', (e) => {
+      if (!startX || !startY) return;
+      
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      
+      // Only trigger if horizontal swipe is more significant than vertical
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+        const currentTab = document.querySelector('.tab-btn.active');
+        const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+        const currentIndex = tabs.indexOf(currentTab);
+        
+        if (diffX > 0 && currentIndex < tabs.length - 1) {
+          // Swipe left - next tab
+          tabs[currentIndex + 1].click();
+        } else if (diffX < 0 && currentIndex > 0) {
+          // Swipe right - previous tab
+          tabs[currentIndex - 1].click();
+        }
+      }
+      
+      startX = 0;
+      startY = 0;
+    });
   }
 };
 
@@ -917,12 +1041,33 @@
   document.addEventListener('DOMContentLoaded', () => {
     window.StepsTracker = StepsTracker;
     StepsTracker.init();
+    StepsTracker.initMobileOptimizations();
   });
   // ---- Register Service Worker for PWA
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
+      // First, try to unregister any existing service workers
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          console.log('Unregistering old service worker');
+          registration.unregister();
+        });
+      });
+      
+      // Then register the new one
       navigator.serviceWorker.register('/service-worker.js')
-        .then(reg => console.log('Service Worker registered'))
+        .then(reg => {
+          console.log('Service Worker registered');
+          // Force update if there's a waiting service worker
+          if (reg.waiting) {
+            reg.waiting.postMessage({ action: 'skipWaiting' });
+          }
+        })
         .catch(err => console.log('Service Worker registration failed'));
+      
+      // Listen for service worker updates
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
     });
   }

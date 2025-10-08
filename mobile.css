@@ -1,0 +1,333 @@
+/* Mobile Optimization for 10K Steps Tracker */
+
+@media (max-width: 768px) {
+  /* Better touch targets - minimum 44px for accessibility */
+  .btn, button, input[type="submit"], input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px 16px;
+    font-size: 16px;
+    border-radius: 8px;
+    touch-action: manipulation;
+  }
+  
+  /* Tab navigation improvements */
+  .tab-btn {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+    margin: 0 4px;
+    flex: 1;
+    text-align: center;
+  }
+  
+  /* Form improvements */
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    border-color: #4f46e5;
+    outline: none;
+  }
+  
+  /* Better spacing */
+  .card {
+    margin: 8px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  /* Mobile table improvements */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  table {
+    min-width: 600px;
+    font-size: 14px;
+  }
+  
+  th, td {
+    padding: 8px 4px;
+    white-space: nowrap;
+  }
+  
+  /* Mobile modal improvements */
+  .modal {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    border-radius: 12px;
+  }
+  
+  /* Better image upload */
+  .proof-image {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  /* Mobile-friendly stats grid */
+  .stat-card {
+    min-height: 80px;
+    padding: 16px;
+    text-align: center;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  
+  .stat-label {
+    font-size: 14px;
+    color: #6b7280;
+  }
+  
+  /* Better mobile navigation */
+  .nav {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+  
+  /* Mobile-friendly leaderboard */
+  .rank-cell {
+    font-size: 18px;
+    min-width: 40px;
+    text-align: center;
+  }
+  
+  /* Achievement badges mobile */
+  .achievement-badge {
+    font-size: 16px;
+    margin: 2px;
+    display: inline-block;
+  }
+  
+  /* Mobile form layout */
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  
+  /* Mobile-friendly buttons */
+  .btn-edit, .btn-delete {
+    min-height: 36px;
+    min-width: 36px;
+    padding: 8px 12px;
+    font-size: 14px;
+    margin: 2px;
+  }
+  
+  /* Mobile message box */
+  .message {
+    margin: 8px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  
+  /* Mobile progress bars */
+  .progress-bar {
+    height: 20px;
+    border-radius: 10px;
+  }
+  
+  .progress-fill {
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  
+  /* Mobile filters */
+  .filters {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .filters input, .filters select {
+    width: 100%;
+  }
+  
+  /* Mobile admin toggle */
+  #admin-toggle {
+    width: 100%;
+    margin: 8px 0;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  /* Mobile export button */
+  #export-csv {
+    width: 100%;
+    margin: 8px 0;
+    padding: 16px;
+    font-size: 16px;
+  }
+  
+  /* Mobile payment details */
+  .payment-details {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  
+  /* Mobile status indicators */
+  .status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  /* Mobile trend indicators */
+  .trend-up, .trend-down, .trend-stable {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  /* Mobile grand totals */
+  .grand-totals {
+    padding: 16px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  
+  .total-item {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  /* Mobile dashboard improvements */
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  /* Mobile at-risk section */
+  .at-risk {
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  
+  .at-risk-content {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  /* Mobile weekly stats */
+  .weekly-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  /* Mobile summary table improvements */
+  .summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .summary-actions button {
+    width: 100%;
+    margin: 2px 0;
+  }
+  
+  /* Mobile proof viewer */
+  .proof-viewer img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+  
+  /* Mobile payment modal */
+  .payment-modal {
+    max-width: 95vw;
+    margin: 8px;
+  }
+  
+  /* Mobile copy button */
+  #copy-payment-message {
+    width: 100%;
+    margin: 8px 0;
+    padding: 12px;
+    font-size: 16px;
+  }
+  
+  /* Mobile textarea */
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+  
+  /* Mobile file input */
+  input[type="file"] {
+    padding: 8px;
+    font-size: 16px;
+  }
+  
+  /* Mobile submit button */
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 16px;
+  }
+}
+
+/* Extra small devices (phones in portrait) */
+@media (max-width: 480px) {
+  .tab-btn {
+    font-size: 14px;
+    padding: 10px 8px;
+  }
+  
+  .stat-card {
+    min-height: 70px;
+    padding: 12px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+  
+  .card {
+    margin: 4px;
+    padding: 12px;
+  }
+  
+  .modal {
+    margin: 8px;
+  }
+  
+  table {
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 6px 2px;
+  }
+}

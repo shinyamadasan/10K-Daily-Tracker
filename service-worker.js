@@ -1,21 +1,30 @@
- const CACHE_NAME = 'steps-tracker-v2';
-  const urlsToCache = [
-    '/10K-Daily-Tracker/',
-    '/10K-Daily-Tracker/index.html',
-    '/10K-Daily-Tracker/app.js',
-    '/10K-Daily-Tracker/style.css'
-  ];
+// Service Worker temporarily disabled to fix Firebase issues
+// This will be re-enabled once Firebase connection is stable
 
-  self.addEventListener('install', event => {
-    event.waitUntil(
-      caches.open(CACHE_NAME)
-        .then(cache => cache.addAll(urlsToCache))
-    );
-  });
+const CACHE_NAME = 'steps-tracker-v5';
 
-  self.addEventListener('fetch', event => {
-    event.respondWith(
-      caches.match(event.request)
-        .then(response => response || fetch(event.request))
-    );
-  });
+self.addEventListener('install', event => {
+  console.log('Service Worker installing...');
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  console.log('Service Worker activating...');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          console.log('Deleting old cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
+// Completely disable fetch interception to prevent Firebase issues
+self.addEventListener('fetch', event => {
+  // Don't intercept ANY requests - let them go directly to the network
+  return;
+});

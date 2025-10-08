@@ -1,0 +1,47 @@
+# Environment variables and sensitive data
+.env
+.env.local
+.env.production
+config.js
+secrets.js
+
+# Actual configuration file (keep template)
+config.js
+
+# API Keys and credentials
+*api-key*
+*secret*
+*credential*
+*password*
+
+# Firebase config files with real keys
+firebase-config.js
+firebase-config.json
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
