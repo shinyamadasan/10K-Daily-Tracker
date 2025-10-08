@@ -17,9 +17,9 @@ const CONFIG = {
     number: "09060076691"
   },
   participants: [
-    "Alyssa", "Angelo", "Bianca", "Carlo", "Celine", "Del", "Diana", "Earl",
-    "Erika", "Gian", "Jake", "Jayson", "Jessa", "Jhona", "Jomari", "Leanne", 
-    "Lui", "Ramon", "Robert", "Sarah", "Shin", "Tina", "Vince", "Yani"
+    "Del", "Giem", "Glaiz", "Jeun", "Joy", "Kokoy",
+    "Leanne", "Lui", "Ramon", "Robert", "Sarah",
+    "Sheila", "Shin", "Yohan", "Zephanny", "Sam"
   ],
   targetSteps: 10000,
   penaltyAmount: 50
