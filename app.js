@@ -477,8 +477,36 @@
         this.showMessage("No proof found.", "error");
         return;
       }
-      const img = document.getElementById('admin-verify-image');
+
+      // Get payment details
+      const summary = this.getParticipantSummary(participant);
+      const totalAmount = summary.amountOwed;
+      const paymentAmount = e.paymentAmount || totalAmount;
+      const remainingAmount = totalAmount - paymentAmount;
+      const isPartialPayment = remainingAmount > 0;
+
+      // Update modal content
       document.getElementById('admin-verify-title').textContent = `Verify Payment for ${participant}`;
+      document.getElementById('admin-total-amount').textContent = `₱${totalAmount}`;
+      document.getElementById('admin-payment-amount').textContent = `₱${paymentAmount}`;
+      document.getElementById('admin-remaining-amount').textContent = `₱${remainingAmount}`;
+      document.getElementById('admin-payment-type').textContent = isPartialPayment ? 'Partial Payment' : 'Full Payment';
+
+      // Show/hide partial payment warning
+      const warningEl = document.getElementById('partial-payment-warning');
+      if (warningEl) {
+        warningEl.style.display = isPartialPayment ? 'block' : 'none';
+      }
+
+      // Set up approve button
+      const approveBtn = document.getElementById('approve-payment-btn');
+      if (approveBtn) {
+        approveBtn.onclick = () => this.approvePayment(participant);
+        approveBtn.textContent = isPartialPayment ? 'Approve Partial Payment' : 'Approve Full Payment';
+      }
+
+      // Show payment proof image
+      const img = document.getElementById('admin-verify-image');
       img.src = e.paymentProof;
       document.getElementById('admin-verify-modal').classList.remove('hidden');
     },
@@ -495,17 +523,55 @@
       try {
         const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js');
 
-        for (const e of this.entries) {
-          if (!e.paymentStatus && e.participant === participant && e.steps < this.targetSteps && !e.isPaid) {
-            await updateDoc(doc(window.db, 'entries', e.firebaseId), { isPaid: true });
-            e.isPaid = true;
+        // Get payment details
+        const summary = this.getParticipantSummary(participant);
+        const totalAmount = summary.amountOwed;
+        const paymentAmount = pending.paymentAmount || totalAmount;
+        const isPartialPayment = paymentAmount < totalAmount;
+
+        if (isPartialPayment) {
+          // For partial payments, we need to calculate how many penalties this payment covers
+          const penaltyPerMiss = this.penaltyAmount;
+          const penaltiesCovered = Math.floor(paymentAmount / penaltyPerMiss);
+          
+          // Mark only the covered penalties as paid
+          let coveredCount = 0;
+          for (const e of this.entries) {
+            if (!e.paymentStatus && e.participant === participant && e.steps < this.targetSteps && !e.isPaid && coveredCount < penaltiesCovered) {
+              await updateDoc(doc(window.db, 'entries', e.firebaseId), { isPaid: true });
+              e.isPaid = true;
+              coveredCount++;
+            }
           }
+
+          // Update payment entry with partial payment info
+          await updateDoc(doc(window.db, 'entries', pending.firebaseId), { 
+            paymentStatus: 'approved',
+            paymentAmount: paymentAmount,
+            penaltiesCovered: penaltiesCovered,
+            remainingAmount: totalAmount - paymentAmount
+          });
+          pending.paymentStatus = 'approved';
+          pending.paymentAmount = paymentAmount;
+          pending.penaltiesCovered = penaltiesCovered;
+          pending.remainingAmount = totalAmount - paymentAmount;
+
+          this.showMessage(`Partial payment of ₱${paymentAmount} approved for ${participant}. ₱${totalAmount - paymentAmount} still owed.`, "success");
+        } else {
+          // For full payments, mark all penalties as paid
+          for (const e of this.entries) {
+            if (!e.paymentStatus && e.participant === participant && e.steps < this.targetSteps && !e.isPaid) {
+              await updateDoc(doc(window.db, 'entries', e.firebaseId), { isPaid: true });
+              e.isPaid = true;
+            }
+          }
+
+          await updateDoc(doc(window.db, 'entries', pending.firebaseId), { paymentStatus: 'approved' });
+          pending.paymentStatus = 'approved';
+
+          this.showMessage(`Full payment approved for ${participant}`, "success");
         }
 
-        await updateDoc(doc(window.db, 'entries', pending.firebaseId), { paymentStatus: 'approved' });
-        pending.paymentStatus = 'approved';
-
-        this.showMessage(`Payment approved for ${participant}`, "success");
         document.getElementById('admin-verify-modal')?.classList.add('hidden');
         this.updateAllDisplays();
       } catch (e) {
@@ -750,9 +816,13 @@
     if (sm.amountOwed > 0) {
       // Check if there's a pending payment proof
       const pendingPay = this.entries.find(e => e.participant === sm.participant && e.paymentStatus === 'pending' && e.paymentProof);
+      const approvedPay = this.entries.find(e => e.participant === sm.participant && e.paymentStatus === 'approved' && e.paymentProof);
 
       if (pendingPay) {
         actionCell = `<td><span class="status status--warning">⏳ Pending Approval</span></td>`;
+      } else if (approvedPay && approvedPay.remainingAmount > 0) {
+        // Show partial payment status
+        actionCell = `<td><span class="status status--partial">💰 Partial Payment (₱${approvedPay.remainingAmount} remaining)</span></td>`;
       } else {
         actionCell = `<td><button class="btn btn--sm btn-primary" onclick="StepsTracker.openPaymentProofModal('${sm.participant}')">Settle</button></td>`;
       }

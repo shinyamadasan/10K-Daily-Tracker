@@ -375,12 +375,46 @@
                   <button id="close-admin-verify-modal" class="close-btn">&times;</button>
               </div>
               <div class="modal-body">
+                  <!-- Payment Details Summary -->
+                  <div class="admin-payment-summary" style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                      <h4 style="margin: 0 0 12px 0; color: #333;">Payment Details</h4>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
+                          <div>
+                              <span style="color: #666;">Total Amount:</span>
+                              <strong id="admin-total-amount">₱0</strong>
+                          </div>
+                          <div>
+                              <span style="color: #666;">Payment Amount:</span>
+                              <strong id="admin-payment-amount">₱0</strong>
+                          </div>
+                          <div>
+                              <span style="color: #666;">Remaining:</span>
+                              <strong id="admin-remaining-amount">₱0</strong>
+                          </div>
+                          <div>
+                              <span style="color: #666;">Payment Type:</span>
+                              <span id="admin-payment-type">Full Payment</span>
+                          </div>
+                      </div>
+                  </div>
+
                   <p>Please verify that the payment has been received before approving.</p>
                   <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; margin-bottom: 16px;">
                       <img id="admin-verify-image" src="" alt="Payment Proof" style="width: 100%; height: auto;">
                   </div>
+                  
+                  <!-- Payment Status Warning -->
+                  <div id="partial-payment-warning" class="payment-warning" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 12px; border-radius: 6px; margin-bottom: 16px; display: none;">
+                      <strong style="color: #856404;">⚠️ Partial Payment Notice:</strong>
+                      <p style="margin: 8px 0 0 0; color: #856404; font-size: 14px;">
+                          This is a partial payment. The participant still owes money. 
+                          They will need to make additional payments to settle their full balance.
+                      </p>
+                  </div>
+
                   <div class="modal-actions">
                       <button type="button" id="close-admin-verify-modal" class="btn btn--secondary">Close</button>
+                      <button type="button" id="approve-payment-btn" class="btn btn--primary">Approve Payment</button>
                   </div>
               </div>
           </div>

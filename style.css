@@ -1631,6 +1631,15 @@ select.form-control {
   color: #155724;
 }
 
+.status--partial {
+  background: #e2e3e5;
+  color: #383d41;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* Mobile responsive adjustments for payment buttons */
 @media (max-width: 768px) {
   .quick-payment-buttons {
