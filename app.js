@@ -36,6 +36,7 @@
       this.setDefaultDate();
       this.setParticipantMode();
       this.updateAllDisplays();
+      this.initPaymentVerification();
       console.log('App initialized successfully');
     },
 
@@ -398,13 +399,19 @@
         return;
       }
 
-      try {
-        const proofUrl = await this.uploadFile(file);
         const participant = this.participantToVerify;
         if (!participant) {
           this.showMessage("No participant selected.", "error");
           return;
         }
+
+      try {
+        const proofUrl = await this.uploadFile(file);
+        
+        // Get the latest payment amount
+        const paymentInfo = this.paymentData[participant];
+        const latestPayment = paymentInfo ? paymentInfo.payments[paymentInfo.payments.length - 1] : null;
+        const paymentAmount = latestPayment ? latestPayment.amount : 0;
 
         let entry = this.entries.find(e => e.participant === participant && e.paymentStatus === "pending");
 
@@ -416,15 +423,19 @@
             participant,
             date: new Date().toISOString().slice(0,10),
             paymentStatus: 'pending',
-            paymentProof: proofUrl
+            paymentProof: proofUrl,
+            paymentAmount: paymentAmount,
+            totalAmount: this.getParticipantSummary(participant).amountOwed
           };
           const docRef = await addDoc(collection(window.db, 'entries'), entry);
           this.entries.push({ firebaseId: docRef.id, ...entry });
         } else {
           await updateDoc(doc(window.db, 'entries', entry.firebaseId), {
-            paymentProof: proofUrl
+            paymentProof: proofUrl,
+            paymentAmount: paymentAmount
           });
           entry.paymentProof = proofUrl;
+          entry.paymentAmount = paymentAmount;
         }
 
         this.showMessage("Payment proof submitted!", "success");
@@ -447,17 +458,15 @@
         return;
       }
 
-      document.getElementById('payment-amount-due').textContent = `₱${s.amountOwed}`;
+      this.participantToVerify = participant;
+      
+      // Update payment display
+      this.updatePaymentDisplay(participant);
 
       // Show admin payment details in modal
       document.getElementById('modal-admin-name').textContent = this.paymentDetails.name;
       document.getElementById('modal-admin-number').textContent = this.paymentDetails.number;
 
-      // Create payment message
-      const paymentMessage = `Hi ${this.paymentDetails.name}! I'm sending ₱${s.amountOwed} for my 10K Steps penalty. - ${participant}`;
-      document.getElementById('payment-message-text').value = paymentMessage;
-
-      this.participantToVerify = participant;
       document.getElementById('payment-proof-modal').classList.remove('hidden');
     },
 
@@ -1034,6 +1043,189 @@
       startX = 0;
       startY = 0;
     });
+  },
+
+  // ---- Payment Verification System
+  initPaymentVerification() {
+    this.paymentData = this.loadPaymentData();
+    this.setupPaymentEventListeners();
+  },
+
+  loadPaymentData() {
+    const saved = localStorage.getItem('10k-tracker-payments');
+    return saved ? JSON.parse(saved) : {};
+  },
+
+  savePaymentData() {
+    localStorage.setItem('10k-tracker-payments', JSON.stringify(this.paymentData));
+  },
+
+  setupPaymentEventListeners() {
+    // Quick payment buttons
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('quick-payment-btn')) {
+        const amount = parseInt(e.target.dataset.amount);
+        this.processQuickPayment(amount);
+      }
+    });
+
+    // Custom payment button
+    const customPayBtn = document.getElementById('pay-custom-amount');
+    if (customPayBtn) {
+      customPayBtn.addEventListener('click', () => {
+        const amount = parseInt(document.getElementById('custom-payment-amount').value);
+        if (amount && amount > 0) {
+          this.processQuickPayment(amount);
+          document.getElementById('custom-payment-amount').value = '';
+        } else {
+          this.showMessage('Please enter a valid amount', 'error');
+        }
+      });
+    }
+
+    // Enter key for custom amount
+    const customAmountInput = document.getElementById('custom-payment-amount');
+    if (customAmountInput) {
+      customAmountInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('pay-custom-amount').click();
+        }
+      });
+    }
+  },
+
+  processQuickPayment(amount) {
+    const participant = this.participantToVerify;
+    if (!participant) {
+      this.showMessage('No participant selected', 'error');
+      return;
+    }
+
+    const summary = this.getParticipantSummary(participant);
+    const totalAmount = summary.amountOwed;
+    
+    // If amount is 0, it means "pay full amount"
+    if (amount === 0) {
+      amount = totalAmount;
+    }
+
+    // Validate payment amount
+    if (amount <= 0) {
+      this.showMessage('Please enter a valid payment amount', 'error');
+      return;
+    }
+
+    if (amount > totalAmount) {
+      this.showMessage(`Payment amount cannot exceed remaining balance of ₱${totalAmount}`, 'error');
+      return;
+    }
+
+    // Get current payment data for this participant
+    if (!this.paymentData[participant]) {
+      this.paymentData[participant] = {
+        totalAmount: totalAmount,
+        amountPaid: 0,
+        payments: []
+      };
+    }
+
+    // Add payment
+    this.paymentData[participant].amountPaid += amount;
+    this.paymentData[participant].payments.push({
+      amount: amount,
+      date: new Date().toISOString(),
+      status: 'pending'
+    });
+
+    // Save payment data
+    this.savePaymentData();
+
+    // Update payment display
+    this.updatePaymentDisplay(participant);
+
+    // Show confirmation
+    this.showMessage(`Payment of ₱${amount} recorded! Please upload your receipt.`, 'success');
+  },
+
+  updatePaymentDisplay(participant) {
+    const summary = this.getParticipantSummary(participant);
+    const totalAmount = summary.amountOwed;
+    
+    // Get payment data
+    const paymentInfo = this.paymentData[participant] || {
+      totalAmount: totalAmount,
+      amountPaid: 0,
+      payments: []
+    };
+
+    // Update payment summary
+    const totalEl = document.getElementById('payment-total-amount');
+    const paidEl = document.getElementById('payment-amount-paid');
+    const remainingEl = document.getElementById('payment-remaining-amount');
+    const statusEl = document.getElementById('payment-status-display');
+
+    if (totalEl) totalEl.textContent = `₱${totalAmount}`;
+    if (paidEl) paidEl.textContent = `₱${paymentInfo.amountPaid}`;
+    if (remainingEl) remainingEl.textContent = `₱${totalAmount - paymentInfo.amountPaid}`;
+
+    // Update status
+    const remaining = totalAmount - paymentInfo.amountPaid;
+    if (remaining === 0) {
+      if (statusEl) {
+        statusEl.textContent = 'Paid in Full';
+        statusEl.className = 'payment-status paid';
+      }
+    } else if (paymentInfo.amountPaid > 0) {
+      if (statusEl) {
+        statusEl.textContent = `Partial Payment - ₱${remaining} remaining`;
+        statusEl.className = 'payment-status partial';
+      }
+    } else {
+      if (statusEl) {
+        statusEl.textContent = 'Payment Pending';
+        statusEl.className = 'payment-status pending';
+      }
+    }
+
+    // Update quick payment buttons
+    this.updateQuickPaymentButtons(remaining);
+
+    // Update payment message
+    this.updatePaymentMessage(participant, remaining);
+  },
+
+  updateQuickPaymentButtons(remainingAmount) {
+    const buttons = document.querySelectorAll('.quick-payment-btn');
+    buttons.forEach(button => {
+      const amount = parseInt(button.dataset.amount);
+      if (amount > 0 && amount > remainingAmount) {
+        button.disabled = true;
+        button.style.opacity = '0.5';
+      } else {
+        button.disabled = false;
+        button.style.opacity = '1';
+      }
+    });
+
+    // Update full payment button
+    const fullPaymentBtn = document.querySelector('.quick-payment-btn.full-payment');
+    if (fullPaymentBtn) {
+      fullPaymentBtn.dataset.amount = remainingAmount;
+      fullPaymentBtn.textContent = `Pay Full Amount (₱${remainingAmount})`;
+      if (remainingAmount === 0) {
+        fullPaymentBtn.disabled = true;
+        fullPaymentBtn.style.opacity = '0.5';
+      }
+    }
+  },
+
+  updatePaymentMessage(participant, remainingAmount) {
+    const messageEl = document.getElementById('payment-message-text');
+    if (messageEl) {
+      const paymentInfo = this.paymentData[participant] || { amountPaid: 0 };
+      const message = `Hi ${this.paymentDetails.name}! I'm sending ₱${paymentInfo.amountPaid} for my 10K Steps penalty. ${remainingAmount > 0 ? `(₱${remainingAmount} remaining)` : '(Full payment)'} - ${participant}`;
+      messageEl.value = message;
+    }
   }
 };
 

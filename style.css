@@ -1563,3 +1563,81 @@ select.form-control {
     margin: 2px;
   }
 }
+
+/* Payment Verification Styles */
+.payment-summary {
+  border: 1px solid #e9ecef;
+}
+
+.quick-payment-buttons {
+  margin-bottom: 16px;
+}
+
+.quick-payment-btn {
+  padding: 10px 16px;
+  border: 2px solid #007bff;
+  border-radius: 6px;
+  background: white;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.quick-payment-btn:hover {
+  background: #007bff;
+  color: white;
+}
+
+.quick-payment-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #ccc;
+}
+
+.quick-payment-btn.full-payment {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
+}
+
+.quick-payment-btn.full-payment:hover {
+  background: #1e7e34;
+  border-color: #1e7e34;
+}
+
+.payment-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.payment-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.payment-status.partial {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.payment-status.paid {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* Mobile responsive adjustments for payment buttons */
+@media (max-width: 768px) {
+  .quick-payment-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .quick-payment-btn.full-payment {
+    grid-column: 1 / -1;
+  }
+}

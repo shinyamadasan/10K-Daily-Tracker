@@ -292,8 +292,51 @@
                   <button id="close-payment-proof-modal" class="close-btn">&times;</button>
               </div>
               <div class="modal-body">
-                  <p>You are about to settle a balance of <strong id="payment-amount-due">₱0</strong>.</p>
+                  <!-- Payment Summary -->
+                  <div class="payment-summary" style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                      <h4 style="margin: 0 0 12px 0; color: #333;">Payment Summary</h4>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px;">
+                          <div>
+                              <span style="color: #666;">Total Amount:</span>
+                              <strong id="payment-total-amount">₱0</strong>
+                          </div>
+                          <div>
+                              <span style="color: #666;">Amount Paid:</span>
+                              <strong id="payment-amount-paid">₱0</strong>
+                          </div>
+                          <div>
+                              <span style="color: #666;">Remaining:</span>
+                              <strong id="payment-remaining-amount">₱0</strong>
+                          </div>
+                          <div>
+                              <span style="color: #666;">Status:</span>
+                              <span id="payment-status-display">Payment Pending</span>
+                          </div>
+                      </div>
+                  </div>
 
+                  <!-- Quick Payment Buttons -->
+                  <div class="quick-payment-section" style="margin-bottom: 20px;">
+                      <h4 style="margin: 0 0 12px 0; color: #333;">Quick Payment Amounts</h4>
+                      <div class="quick-payment-buttons" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px;">
+                          <button class="quick-payment-btn" data-amount="25">₱25</button>
+                          <button class="quick-payment-btn" data-amount="50">₱50</button>
+                          <button class="quick-payment-btn" data-amount="75">₱75</button>
+                          <button class="quick-payment-btn" data-amount="100">₱100</button>
+                          <button class="quick-payment-btn full-payment" data-amount="0" style="grid-column: 1 / -1; background: #28a745;">Pay Full Amount</button>
+                      </div>
+                  </div>
+
+                  <!-- Custom Amount Input -->
+                  <div class="custom-payment-section" style="margin-bottom: 20px;">
+                      <h4 style="margin: 0 0 12px 0; color: #333;">Custom Amount</h4>
+                      <div style="display: flex; gap: 8px;">
+                          <input type="number" id="custom-payment-amount" class="form-control" placeholder="Enter amount" min="1" style="flex: 1;">
+                          <button id="pay-custom-amount" class="btn btn--secondary">Pay</button>
+                      </div>
+                  </div>
+
+                  <!-- Payment Instructions -->
                   <div style="margin: 16px 0; padding: 12px; background: #f5f5f5; border-radius: 4px;">
                       <p style="margin-bottom: 8px;"><strong>Send payment to:</strong></p>
                       <p style="margin-bottom: 4px;">Name: <strong id="modal-admin-name"></strong></p>
@@ -309,6 +352,7 @@
                       </button>
                   </div>
 
+                  <!-- Payment Receipt Upload -->
                   <p style="margin-top: 16px;">After sending, upload your GCash receipt below:</p>
                   <form id="payment-proof-form">
                       <div class="form-group">
